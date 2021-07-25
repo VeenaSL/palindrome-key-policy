@@ -4,12 +4,12 @@ import (
 	"testing"
 )
 
-func TestParsingSettingsWithAllValuesProvidedFromValidationReq(t *testing.T) {
+func TestParsingSettingsWithValueProvidedFromValidationReq(t *testing.T) {
 	request := `
 	{
 		"request": "doesn't matter here",
 		"settings": {
-			"denied_names": [ "foo", "bar" ]
+			"deny_palindrome_key": true
 		}
 	}
 	`
@@ -20,37 +20,16 @@ func TestParsingSettingsWithAllValuesProvidedFromValidationReq(t *testing.T) {
 		t.Errorf("Unexpected error %+v", err)
 	}
 
-	expected := []string{"foo", "bar"}
-	for _, exp := range expected {
-		if !settings.DeniedNames.Contains(exp) {
-			t.Errorf("Missing value %s", exp)
-		}
-	}
-}
-
-func TestParsingSettingsWithNoValueProvided(t *testing.T) {
-	request := `
-	{
-		"request": "doesn't matter here",
-		"settings": {
-		}
-	}
-	`
-	rawRequest := []byte(request)
-
-	settings, err := NewSettingsFromValidationReq(rawRequest)
-	if err != nil {
-		t.Errorf("Unexpected error %+v", err)
+	if settings.DenyPalindromeKey != true {
+		t.Errorf("Wrong value for DenyPalindromeKey")
 	}
 
-	if settings.DeniedNames.Cardinality() != 0 {
-		t.Errorf("Expecpted DeniedNames to be empty")
-	}
 }
 
 func TestSettingsAreValid(t *testing.T) {
 	request := `
 	{
+		"deny_palindrome_key": true
 	}
 	`
 	rawRequest := []byte(request)

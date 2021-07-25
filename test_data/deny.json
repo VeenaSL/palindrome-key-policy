@@ -12,8 +12,8 @@
       "name": "tls-example-ingress",
       "namespace": "some-namespace",
       "labels": {
-        "cc-center": "123",
-        "owner": "team-alpha"
+        "env": "123",
+        "level": "team-alpha"
       }
     },
     "spec": {

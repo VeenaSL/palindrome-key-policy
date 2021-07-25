@@ -3,12 +3,17 @@ package main
 import (
 	"fmt"
 
-	onelog "github.com/francoispqt/onelog"
 	"github.com/kubewarden/gjson"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 )
 
 func validate(payload []byte) ([]byte, error) {
+	if !gjson.ValidBytes(payload) {
+		return kubewarden.RejectRequest(
+			kubewarden.Message("Not a valid JSON document"),
+			kubewarden.Code(400))
+	}
+
 	settings, err := NewSettingsFromValidationReq(payload)
 	if err != nil {
 		return kubewarden.RejectRequest(
@@ -16,36 +21,44 @@ func validate(payload []byte) ([]byte, error) {
 			kubewarden.Code(400))
 	}
 
-	logger.Info("validating request")
-
 	data := gjson.GetBytes(
 		payload,
-		"request.object.metadata.name")
+		"request.object.metadata.labels")
+	//logger.InfoWithFields("breaking news !", func(e onelog.Entry) {
+	//	e.String("data", data.Str)
+	//})
 
-	if !data.Exists() {
-		logger.Warn("cannot read object name from metadata: accepting request")
-		return kubewarden.AcceptRequest()
-	}
-	name := data.String()
+	data.ForEach(func(key, value gjson.Result) bool {
+		label := key.String()
 
-	logger.DebugWithFields("validating ingress object", func(e onelog.Entry) {
-		namespace := gjson.GetBytes(payload, "request.object.metadata.namespace").String()
-		e.String("name", name)
-		e.String("namespace", namespace)
+		logger.Info(label)
+
+		if settings.DenyPalindromeKey == true {
+			if isPalindrome(label) {
+				logger.Info("Found palindrome")
+				err = fmt.Errorf("Label has a palindrome key %s, hence denied", label)
+				return false
+			}
+		}
+
+		return true
 	})
 
-	if settings.DeniedNames.Contains(name) {
-		logger.InfoWithFields("rejecting ingress object", func(e onelog.Entry) {
-			e.String("name", name)
-			e.String("denied_names", settings.DeniedNames.String())
-		})
-
+	if err != nil {
 		return kubewarden.RejectRequest(
-			kubewarden.Message(
-				fmt.Sprintf("The '%s' name is on the deny list", name)),
+			kubewarden.Message(err.Error()),
 			kubewarden.NoCode)
 	}
 
-	logger.Info("accepting ingress object")
 	return kubewarden.AcceptRequest()
+}
+
+func isPalindrome(str string) bool {
+	for i := 0; i < len(str); i++ {
+		j := len(str) - 1 - i
+		if str[i] != str[j] {
+			return false
+		}
+	}
+	return true
 }

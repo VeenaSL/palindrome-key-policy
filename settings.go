@@ -1,7 +1,7 @@
 package main
 
 import (
-	mapset "github.com/deckarep/golang-set"
+	
 	"github.com/kubewarden/gjson"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 
@@ -9,7 +9,7 @@ import (
 )
 
 type Settings struct {
-	DeniedNames mapset.Set `json:"denied_names"`
+	DenyPalindromeKey bool `json:"deny_palindrome_key"`
 }
 
 // Builds a new Settings instance starting from a validation
@@ -17,24 +17,24 @@ type Settings struct {
 // {
 //    "request": ...,
 //    "settings": {
-//       "denied_names": [...]
+//       "deny_palindrome_key": true
 //    }
 // }
 func NewSettingsFromValidationReq(payload []byte) (Settings, error) {
 	return newSettings(
 		payload,
-		"settings.denied_names")
+		"settings.deny_palindrome_key")
 }
 
 // Builds a new Settings instance starting from a Settings
 // payload:
 // {
-//    "denied_names": ...
+//    "deny_palindrome_key": ...
 // }
 func NewSettingsFromValidateSettingsPayload(payload []byte) (Settings, error) {
 	return newSettings(
 		payload,
-		"denied_names")
+		"deny_palindrome_key")
 }
 
 func newSettings(payload []byte, paths ...string) (Settings, error) {
@@ -44,14 +44,13 @@ func newSettings(payload []byte, paths ...string) (Settings, error) {
 
 	data := gjson.GetManyBytes(payload, paths...)
 
-	deniedNames := mapset.NewThreadUnsafeSet()
-	data[0].ForEach(func(_, entry gjson.Result) bool {
-		deniedNames.Add(entry.String())
-		return true
-	})
+	deny_palindrome_key := true
+	if data[0].Exists() {
+		deny_palindrome_key = data[0].Bool()
+	}
 
 	return Settings{
-		DeniedNames: deniedNames,
+		DenyPalindromeKey: deny_palindrome_key,
 	}, nil
 }
 

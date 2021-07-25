@@ -6,13 +6,16 @@ rules:
 mutating: false
 contextAware: false
 annotations:
-  io.kubewarden.policy.title: policy-name
-  io.kubewarden.policy.description: Short description
-  io.kubewarden.policy.author: policy-author
-  io.kubewarden.policy.url: https://github.com/yourorg/policy-name
-  io.kubewarden.policy.source: https://github.com/yourorg/policy-name
+  io.kubewarden.policy.title: palindrome-key-policy
+  io.kubewarden.policy.description: Allows you to deny palindrome keys in the label 
+  io.kubewarden.policy.author: Veena Lingadahalli
+  io.kubewarden.policy.url: https://github.com/VeenaSL/palindrome-key-policy
+  io.kubewarden.policy.source: https://github.com/VeenaSL/palindrome-key-policy
   io.kubewarden.policy.license: Apache-2.0
   io.kubewarden.policy.usage: |
-    Long explaination.
+    This policy allows you to reject requests if:
+    - If the resource labels has one or more palindrome key.
+   
+    This policy accepts the following settings:
 
-    **Note well:** this can be Markdown text
+    - `deny_palindrome_key`: bool  If enabled, palindrome keys in the labels will be rejected.
